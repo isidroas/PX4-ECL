@@ -196,6 +196,7 @@ void Ekf::resetHorizontalPositionToVision() {
 		_ev_pos = _R_ev_to_ekf *_ev_sample_delayed.pos;
 	}
 	resetHorizontalPositionTo(Vector2f(_ev_pos));
+    // No se debería de usar la varianza de la medida, ya que puede que no exista
 	P.uncorrelateCovarianceSetVariance<2>(7, _ev_sample_delayed.posVar.slice<2, 1>(0, 0));
 }
 
@@ -253,6 +254,8 @@ void Ekf::resetHeight()
 		} else {
 			// TODO: reset to last known baro based estimate
 		}
+        ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical al barómetro");
+        PX4_INFO("[EKF] Se ha reseteado la posición vertical al barómetro");
 
 	} else if (_control_status.flags.gps_hgt) {
 		// initialize vertical position and velocity with newest gps measurement
@@ -283,11 +286,27 @@ void Ekf::resetHeight()
 		vert_pos_reset = true;
 
 		if (std::abs(dt_newest) < std::abs(dt_delayed)) {
-			_state.pos(2) = ev_newest.pos(2);
+			if (_params.fusion_mode & MASK_ROTATE_EV) {
+				Vector3f ev_pos_meas = _R_ev_to_ekf * ev_newest.pos;
+				_state.pos(2) = ev_pos_meas(2);
+			}
+            else{
+			    _state.pos(2) = ev_newest.pos(2);
+            }
 
 		} else {
-			_state.pos(2) = _ev_sample_delayed.pos(2);
+			if (_params.fusion_mode & MASK_ROTATE_EV) {
+				Vector3f ev_pos_meas = _R_ev_to_ekf * _ev_sample_delayed.pos;
+				_state.pos(2) = ev_pos_meas(2);
+			}
+            else{
+			    _state.pos(2) = _ev_sample_delayed.pos(2);
+            }
 		}
+		P.uncorrelateCovarianceSetVariance<1>(9, sq(0.02));
+
+        ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical a la visión");
+        PX4_INFO("[EKF] Se ha reseteado la posición vertical a la visión");
 
 	}
 
@@ -1618,7 +1637,8 @@ void Ekf::stopEvFusion()
 {
 	stopEvPosFusion();
 	stopEvVelFusion();
-	stopEvYawFusion();
+    if (_control_status.flags.ev_yaw)
+	    stopEvYawFusion();
 }
 
 void Ekf::stopEvPosFusion()
@@ -1640,6 +1660,7 @@ void Ekf::stopEvVelFusion()
 void Ekf::stopEvYawFusion()
 {
 	_control_status.flags.ev_yaw = false;
+    resetMagHeading(_mag_lpf.getState());
 }
 
 void Ekf::stopAuxVelFusion()
