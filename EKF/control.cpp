@@ -1017,9 +1017,6 @@ void Ekf::controlHeightFusion()
 			setControlEVHeight();
 			resetHeight();
             ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical");
-            PX4_INFO("[EKF] Se ha reseteado la posición vertical");
-            PX4_WARN("[EKF] Se ha reseteado la posición vertical");
-            PX4_DEBUG("[EKF] Se ha reseteado la posición vertical");
 		}
 
 		if (_control_status.flags.baro_hgt && _baro_data_ready && !_baro_hgt_faulty) {

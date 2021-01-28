@@ -121,7 +121,6 @@ bool Ekf::fuseHorizontalPosition(const Vector3f &innov, const Vector2f &innov_ga
 		return true;
 
 	} else {
-		PX4_INFO("[Isidro] Rejected horizontal postion measure with test ratio: %0.2f", (double)test_ratio(0));
 		_innov_check_fail_status.flags.reject_hor_pos = true;
 		return false;
 	}
@@ -145,7 +144,6 @@ bool Ekf::fuseVerticalPosition(const Vector3f &innov, const Vector2f &innov_gate
 		return true;
 
 	} else {
-		PX4_INFO("[Isidro] Rejected vertical postion measure with test ratio: %0.2f", (double)test_ratio(1));
 		_innov_check_fail_status.flags.reject_ver_pos = true;
 		return false;
 	}

@@ -255,7 +255,6 @@ void Ekf::resetHeight()
 			// TODO: reset to last known baro based estimate
 		}
         ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical al barómetro");
-        PX4_INFO("[EKF] Se ha reseteado la posición vertical al barómetro");
 
 	} else if (_control_status.flags.gps_hgt) {
 		// initialize vertical position and velocity with newest gps measurement
@@ -306,7 +305,6 @@ void Ekf::resetHeight()
 		P.uncorrelateCovarianceSetVariance<1>(9, sq(0.02));
 
         ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical a la visión");
-        PX4_INFO("[EKF] Se ha reseteado la posición vertical a la visión");
 
 	}
 
