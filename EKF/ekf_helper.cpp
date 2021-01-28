@@ -755,7 +755,7 @@ void Ekf::get_ekf_lpos_accuracy(float *ekf_eph, float *ekf_epv) const
 	// If we are dead-reckoning, use the innovations as a conservative alternate measure of the horizontal position error
 	// The reason is that complete rejection of measurements is often caused by heading misalignment or inertial sensing errors
 	// and using state variances for accuracy reporting is overly optimistic in these situations
-	if (_is_dead_reckoning && _control_status.flags.gps) {
+	if (_deadreckon_time_exceeded && _control_status.flags.gps) {
 		hpos_err = math::max(hpos_err, sqrtf(sq(_gps_pos_innov(0)) + sq(_gps_pos_innov(1))));
 	}
 
@@ -771,7 +771,7 @@ void Ekf::get_ekf_vel_accuracy(float *ekf_evh, float *ekf_evv) const
 	// If we are dead-reckoning, use the innovations as a conservative alternate measure of the horizontal velocity error
 	// The reason is that complete rejection of measurements is often caused by heading misalignment or inertial sensing errors
 	// and using state variances for accuracy reporting is overly optimistic in these situations
-	if (_is_dead_reckoning) {
+	if (_deadreckon_time_exceeded) {
 		float vel_err_conservative = 0.0f;
 
 		if (_control_status.flags.opt_flow) {
