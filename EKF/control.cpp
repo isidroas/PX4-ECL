@@ -43,9 +43,6 @@
 #include "ekf.h"
 #include <mathlib/mathlib.h>
 
-#define RESET_TIMEOUT_MAX_VISION  1000000   // Timeout sin llegar medidas de visión, al que se resetea la posición del EKF un vez llegue (us)
-                                            // También es el tiempo que se espera desde que no llegan medidas, para considerar parada la visión y resetear el yaw
-
 void Ekf::controlFusionModes()
 {
 	// Store the status to enable change detection
@@ -295,8 +292,7 @@ void Ekf::controlExternalVisionFusion()
 				ev_pos_obs_var(1) = fmaxf(ev_pos_var(1, 1), sq(0.01f));
 
 				// check if we have been deadreckoning too long
-				//if (isTimedOut(_time_last_hor_pos_fuse, _params.reset_timeout_max)) {
-				if (isTimedOut(_time_last_hor_pos_fuse, RESET_TIMEOUT_MAX_VISION)) {
+				if (isTimedOut(_time_last_hor_pos_fuse, _params.reset_timeout_max)) {
 					// only reset velocity if we have no another source of aiding constraining it
 					if (isTimedOut(_time_last_of_fuse, (uint64_t)1E6) &&
 					    isTimedOut(_time_last_hor_vel_fuse, (uint64_t)1E6)) {
@@ -344,7 +340,7 @@ void Ekf::controlExternalVisionFusion()
 		}
 
 	} else if ((_control_status.flags.ev_pos || _control_status.flags.ev_vel)
-		   && isTimedOut(_time_last_ext_vision, (uint64_t) RESET_TIMEOUT_MAX_VISION)) {
+		   && isTimedOut(_time_last_ext_vision, (uint64_t)_params.reset_timeout_max)) {
 
 		// Turn off EV fusion mode if no data has been received
 		stopEvFusion();
@@ -756,7 +752,7 @@ void Ekf::controlHeightSensorTimeouts()
 	const bool continuous_bad_accel_hgt = isTimedOut(_time_good_vert_accel, (uint64_t)_params.bad_acc_reset_delay_us);
 
 	// check if height has been inertial deadreckoning for too long
-	const bool hgt_fusion_timeout = isTimedOut(_time_last_hgt_fuse, (uint64_t)1e6);
+	const bool hgt_fusion_timeout = isTimedOut(_time_last_hgt_fuse, (uint64_t)5e6);
 
 	if (hgt_fusion_timeout || continuous_bad_accel_hgt) {
 
@@ -1016,7 +1012,6 @@ void Ekf::controlHeightFusion()
 			fuse_height = true;
 			setControlEVHeight();
 			resetHeight();
-            ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical");
 		}
 
 		if (_control_status.flags.baro_hgt && _baro_data_ready && !_baro_hgt_faulty) {
