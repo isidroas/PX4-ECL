@@ -284,26 +284,11 @@ void Ekf::resetHeight()
 		vert_pos_reset = true;
 
 		if (std::abs(dt_newest) < std::abs(dt_delayed)) {
-			if (_params.fusion_mode & MASK_ROTATE_EV) {
-				Vector3f ev_pos_meas = _R_ev_to_ekf * ev_newest.pos;
-				_state.pos(2) = ev_pos_meas(2);
-			}
-            else{
-			    _state.pos(2) = ev_newest.pos(2);
-            }
+			_state.pos(2) = ev_newest.pos(2);
 
 		} else {
-			if (_params.fusion_mode & MASK_ROTATE_EV) {
-				Vector3f ev_pos_meas = _R_ev_to_ekf * _ev_sample_delayed.pos;
-				_state.pos(2) = ev_pos_meas(2);
-			}
-            else{
-			    _state.pos(2) = _ev_sample_delayed.pos(2);
-            }
+			_state.pos(2) = _ev_sample_delayed.pos(2);
 		}
-		P.uncorrelateCovarianceSetVariance<1>(9, sq(0.02));
-
-        ECL_INFO_TIMESTAMPED("Se ha reseteado la posición vertical a la visión");
 
 	}
 

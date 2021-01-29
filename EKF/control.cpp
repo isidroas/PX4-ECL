@@ -166,18 +166,6 @@ void Ekf::controlFusionModes()
 	controlAirDataFusion();
 	controlBetaFusion();
 	controlDragFusion();
-
-    // este trozo de código proviene de la fusión controlExternalVisionFusion. La necesito aquí porque la necesita la altura
-	if (_ev_data_ready) {
-
-		// if the ev data is not in a NED reference frame, then the transformation between EV and EKF navigation frames
-		// needs to be calculated and the observations rotated into the EKF frame of reference
-		if ((_params.fusion_mode & MASK_ROTATE_EV) && ((_params.fusion_mode & MASK_USE_EVPOS) || (_params.fusion_mode & MASK_USE_EVVEL)) && !_control_status.flags.ev_yaw) {
-			// rotate EV measurements into the EKF Navigation frame
-			calcExtVisRotMat();
-		}
-    }
-
 	controlHeightFusion();
 
 	// Additional data odoemtery data from an external estimator can be fused.
@@ -200,10 +188,10 @@ void Ekf::controlExternalVisionFusion()
 
 		// if the ev data is not in a NED reference frame, then the transformation between EV and EKF navigation frames
 		// needs to be calculated and the observations rotated into the EKF frame of reference
-		//if ((_params.fusion_mode & MASK_ROTATE_EV) && ((_params.fusion_mode & MASK_USE_EVPOS) || (_params.fusion_mode & MASK_USE_EVVEL)) && !_control_status.flags.ev_yaw) {
-		//	// rotate EV measurements into the EKF Navigation frame
-		//	calcExtVisRotMat();
-		//}
+		if ((_params.fusion_mode & MASK_ROTATE_EV) && ((_params.fusion_mode & MASK_USE_EVPOS) || (_params.fusion_mode & MASK_USE_EVVEL)) && !_control_status.flags.ev_yaw) {
+			// rotate EV measurements into the EKF Navigation frame
+			calcExtVisRotMat();
+		}
 
 		// external vision aiding selection logic
 		if (_control_status.flags.tilt_align && _control_status.flags.yaw_align) {
@@ -1020,7 +1008,7 @@ void Ekf::controlHeightFusion()
 		}
 
 		// determine if we should use the vertical position observation
-		if (_control_status.flags.ev_hgt && _ev_data_ready ) {
+		if (_control_status.flags.ev_hgt) {
 			fuse_height = true;
 		}
 
@@ -1108,14 +1096,8 @@ void Ekf::controlHeightFusion()
 		} else if (_control_status.flags.ev_hgt) {
 			Vector2f ev_hgt_innov_gate;
 			Vector3f ev_hgt_obs_var;
-
-			Vector3f ev_pos_meas = _ev_sample_delayed.pos;
-
-			if (_params.fusion_mode & MASK_ROTATE_EV) {
-				ev_pos_meas = _R_ev_to_ekf * ev_pos_meas;
-			}
-
-			_ev_pos_innov(2) = _state.pos(2) - ev_pos_meas(2);
+			// calculate the innovation assuming the external vision observation is in local NED frame
+			_ev_pos_innov(2) = _state.pos(2) - _ev_sample_delayed.pos(2);
 			// observation variance - defined externally
 			ev_hgt_obs_var(2) = fmaxf(_ev_sample_delayed.posVar(2), sq(0.01f));
 			// innovation gate size
