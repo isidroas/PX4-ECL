@@ -1619,8 +1619,7 @@ void Ekf::stopEvFusion()
 {
 	stopEvPosFusion();
 	stopEvVelFusion();
-    if (_control_status.flags.ev_yaw)
-	    stopEvYawFusion();
+	stopEvYawFusion();
 }
 
 void Ekf::stopEvPosFusion()
@@ -1642,7 +1641,6 @@ void Ekf::stopEvVelFusion()
 void Ekf::stopEvYawFusion()
 {
 	_control_status.flags.ev_yaw = false;
-    resetMagHeading(_mag_lpf.getState());
 }
 
 void Ekf::stopAuxVelFusion()
